@@ -6,6 +6,7 @@ import BuscaItem from './BuscaItem'
 import { movies } from './Data/movies';
 import { filter } from 'minimatch';
 import { Link } from 'react-router-dom';
+import { api } from './services';
 
 const useStyles = makeStyles((theme) => ({
 	form: {
@@ -38,14 +39,31 @@ export default function BuscaForm() {
 
   const [search,setSearch] = useState('');
   const [moviesFiltered, setMoviesFiltered] = useState(movies);
+  const [initialMovies,setinitialMovies] = useState(movies)
+  const [error, setError]= useState(false)
+
+  const getMoviesFromApi =(event) =>{
+	  event.preventDefault();
+	  if(search.length>2){
+		  setError(false)
+		api.get(`/?apikey=67f2f4c&&s=${search}`).then((response)=>{
+		setMoviesFiltered(response.data.Search);
+		setinitialMovies([...initialMovies,...response.data.Search])
+   });
+  }
+  else{
+	  setError(true);
+  }
+}
+    
 
   useEffect(()=>{
 	  if(search ===''){
-		  setMoviesFiltered(movies);
+		  setMoviesFiltered(initialMovies);
 	  }
 	  else{
 		setMoviesFiltered(
-			movies.filter(m=>m.Title.toLowerCase().includes(search))
+			initialMovies.filter(m=>m.Title.toLowerCase().includes(search))
 		)
 		
 	  }
@@ -54,8 +72,10 @@ export default function BuscaForm() {
 
   return (
 	  <>
-		<form className={classes.form} noValidate autoComplete="off">
+		<form className={classes.form} noValidate autoComplete="off" onSubmit={getMoviesFromApi}> 
 			<TextField 
+			error={error}
+			helperText={error?"Digite pelo menos três caracteres":""}
 			className={classes.titulo} 
 			id="outlined-basic" 
 			label="Título" 
@@ -63,7 +83,7 @@ export default function BuscaForm() {
 			value={search}
 			onChange={(e)=>setSearch(e.target.value.toLowerCase())}
 		/>
-			<Button variant="contained" color="primary">Buscar</Button>
+			<Button variant="contained" color="primary" onClick={getMoviesFromApi}>Buscar</Button>
 		</form>
 
 		<div className={classes.resultado}>
